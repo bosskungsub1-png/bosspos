@@ -1,0 +1,71 @@
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# IDE and Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+*.sublime-project
+*.sublime-workspace
+
+# Node modules (ถ้ามี)
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Build and dist
+dist/
+build/
+*.min.js
+*.min.css
+
+# OS files
+Thumbs.db
+.Thumbs.db
+.AppleDouble
+.LSOverride
+
+# Backup files
+*.backup
+*.bak
+*.tmp
+*.old
+
+# Logs
+logs/
+*.log
+
+# Cache
+.cache/
+*.cache
+
+# Google Apps Script specific (ถ้า clone จาก Google)
+appsscript.json (optional)
+
+# Database backups
+*.sql
+*.db
+*.sqlite
+
+# Config files ที่มี secrets
+config.local.js
+secrets.json
+
+# Temporary files
+temp/
+tmp/
+*.temp
+
+# Dependencies lock files (optional)
+# package-lock.json
+# yarn.lock
+
+# Google Sheets exports
+*.xlsx
+*.xls
+*.csv (optional - สำหรับ exports เท่านั้น)
