@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Customer Display</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:100%;height:100%;background:#1a1a2e;color:white;font-family:'Segoe UI',Arial,sans-serif;overflow:hidden}
+.wrap{display:flex;flex-direction:column;height:100vh;position:relative;z-index:1}
+#bgImg{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;opacity:.2;z-index:0;display:none}
+
+/* HEADER */
+.hdr{padding:14px 24px;background:rgba(0,0,0,.45);display:flex;align-items:center;gap:14px;flex-shrink:0}
+#shopLogo{width:52px;height:52px;object-fit:contain;border-radius:8px;display:none}
+#shopName{font-size:24px;font-weight:bold;color:#f1c40f}
+#shopSub{font-size:12px;color:#aaa;margin-top:2px}
+
+/* IDLE */
+#idleView{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;padding:30px}
+#idleLogo{max-width:160px;max-height:160px;object-fit:contain;border-radius:14px;margin-bottom:18px;display:none}
+#idleName{font-size:38px;font-weight:bold;color:#f1c40f;margin-bottom:10px;text-align:center}
+#idleSub{font-size:17px;color:#aaa;text-align:center}
+.blink{animation:blink 2s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* CART */
+#cartView{display:none;flex-direction:column;flex:1;overflow:hidden}
+.items-wrap{flex:1;overflow:hidden;padding:14px 24px 4px;display:flex;flex-direction:column}
+.items-lbl{font-size:11px;color:#aaa;margin-bottom:6px;text-transform:uppercase;letter-spacing:1.5px}
+#itemsTable{width:100%;border-collapse:collapse}
+#itemsTable th{padding:9px 8px;font-size:12px;color:#aaa;border-bottom:1px solid rgba(255,255,255,.15);text-align:left;font-weight:normal}
+#itemsTable th:last-child,#itemsTable td:last-child{text-align:right}
+#itemsTable td{padding:10px 8px;font-size:16px;border-bottom:1px solid rgba(255,255,255,.06)}
+.qty-b{background:rgba(255,255,255,.15);border-radius:10px;padding:1px 8px;font-size:13px;color:#ddd}
+
+.total-wrap{padding:6px 24px 18px;flex-shrink:0}
+.total-bar{display:flex;justify-content:space-between;align-items:center;padding:12px 22px;border-radius:14px;background:rgba(46,204,113,.2);border:1px solid rgba(46,204,113,.4)}
+.total-bar .lbl{font-size:18px;color:#2ecc71}
+.total-bar .amt{font-size:40px;font-weight:bold;color:#2ecc71}
+
+/* PAID OVERLAY */
+#paidView{display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:50;flex-direction:column;align-items:center;justify-content:center;padding:30px}
+#paidView.show{display:flex}
+.p-icon{font-size:84px;margin-bottom:10px;animation:pop .4s ease-out}
+.p-title{font-size:40px;font-weight:bold;color:#2ecc71;margin-bottom:22px}
+@keyframes pop{0%{transform:scale(0)}80%{transform:scale(1.1)}100%{transform:scale(1)}}
+.p-cards{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;max-width:720px;width:100%}
+.p-card{border-radius:16px;padding:18px 22px;min-width:150px;text-align:center;border:1px solid rgba(255,255,255,.2);flex:1;background:rgba(255,255,255,.1)}
+.p-card .cl{font-size:13px;color:#aaa;margin-bottom:6px}
+.p-card .cv{font-size:30px;font-weight:bold}
+.green{background:rgba(46,204,113,.2);border-color:rgba(46,204,113,.4)}.green .cv{color:#2ecc71}
+.blue{background:rgba(52,152,219,.2);border-color:rgba(52,152,219,.4)}.blue .cv{color:#3498db}
+.purple{background:rgba(142,68,173,.2);border-color:rgba(142,68,173,.4)}.purple .cv{color:#9b59b6}
+.yellow{background:rgba(241,196,15,.2);border-color:rgba(241,196,15,.4)}.yellow .cv{color:#f1c40f}
+.orange{background:rgba(230,126,34,.2);border-color:rgba(230,126,34,.4)}.orange .cv{color:#e67e22}
+
+#statusBar{position:fixed;bottom:6px;right:12px;font-size:11px;color:rgba(255,255,255,.3);z-index:100}
+</style>
+</head>
+<body>
+<img id="bgImg" src="">
+<div class="wrap">
+  <div class="hdr">
+    <img id="shopLogo" src="">
+    <div><div id="shopName">ร้านค้า</div><div id="shopSub"></div></div>
+  </div>
+
+  <div id="idleView">
+    <img id="idleLogo" src="">
+    <div id="idleName">ยินดีต้อนรับ</div>
+    <div id="idleSub" class="blink">กรุณารอสักครู่...</div>
+  </div>
+
+  <div id="cartView">
+    <div class="items-wrap">
+      <div class="items-lbl">รายการสินค้า</div>
+      <table id="itemsTable">
+        <thead><tr>
+          <th>สินค้า</th>
+          <th style="text-align:center;width:80px">จำนวน</th>
+          <th style="text-align:right;width:90px">ราคา</th>
+          <th style="text-align:right;width:90px">รวม</th>
+        </tr></thead>
+        <tbody id="itemsBody"></tbody>
+      </table>
+    </div>
+    <div class="total-wrap">
+      <div class="total-bar">
+        <span class="lbl">💰 ยอดรวม</span>
+        <span class="amt" id="dispTotal">0 ฿</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="paidView">
+  <div class="p-icon" id="pIcon">✅</div>
+  <div class="p-title" id="pTitle">ชำระเงินแล้ว</div>
+  <div class="p-cards" id="pCards"></div>
+</div>
+
+<div id="statusBar">🟢 จอที่ 2 (เครื่องเดียวกัน)</div>
+
+<script>
+var pTimer    = null;
+var paidActive = false;
+var lastCartTs = 0;
+
+function fmt(n){ return Number(n||0).toLocaleString(); }
+
+function applySettings(){
+  try{
+    var raw=localStorage.getItem('receipt_settings');
+    if(!raw) return;
+    var s=JSON.parse(raw);
+    var sn=s.shopName||'ร้านค้า';
+    setText('shopName',sn); setText('idleName',sn);
+    var sub=[s.shopAddress,s.shopTel].filter(Boolean).join(' | ');
+    setText('shopSub',sub);
+    if(s.logoUrl){ setImg('shopLogo',s.logoUrl); setImg('idleLogo',s.logoUrl); }
+    if(s.bgUrl) setImg('bgImg',s.bgUrl);
+    if(s.bgColor) document.body.style.background=s.bgColor;
+  }catch(e){}
+}
+
+function setText(id,v){ var e=document.getElementById(id); if(e) e.textContent=v; }
+function setImg(id,src){ var e=document.getElementById(id); if(!e) return; e.src=src; e.style.display='block'; }
+
+function handleData(raw){
+  try{
+    var data=typeof raw==='string'?JSON.parse(raw):raw;
+    if(!data||!data.type) return;
+
+    if(data.type==='cart'){
+      var ts=data.ts||0;
+      if(ts>0 && ts<=lastCartTs) return;
+      lastCartTs=ts;
+      clearTimeout(pTimer);
+      paidActive=false;
+      showCart(data);
+      return;
+    }
+    if(data.type==='paid'){
+      if(paidActive) return;
+      paidActive=true;
+      showPaid(data);
+      return;
+    }
+    if(data.type==='clear'){
+      if(paidActive) return;
+      showIdle();
+    }
+  }catch(e){}
+}
+
+function showCart(data){
+  var pv=document.getElementById('paidView');
+  pv.classList.remove('show');
+  show('cartView','flex'); hide('idleView');
+
+  var body='';
+  (data.items||[]).forEach(function(i){
+    body+='<tr>';
+    body+='<td style="padding:7px 8px;font-size:15px">'+i.name+'</td>';
+    body+='<td style="text-align:center;padding:7px 4px"><span class="qty-b">'+String.fromCharCode(215)+i.qty+'</span></td>';
+    body+='<td style="text-align:right;padding:7px 8px;color:#aaa;font-size:14px">'+fmt(i.price)+'</td>';
+    body+='<td style="text-align:right;padding:7px 8px;font-weight:bold;font-size:15px;color:#2ecc71">'+fmt(i.total)+'</td>';
+    body+='</tr>';
+  });
+  if(!body){ showIdle(); return; }
+  document.getElementById('itemsBody').innerHTML=body;
+  document.getElementById('dispTotal').textContent=fmt(data.total)+' ฿';
+}
+
+function card(lbl,amt,cls){
+  return '<div class="p-card '+(cls||'')+'"><div class="cl">'+lbl+'</div><div class="cv">'+amt+'</div></div>';
+}
+
+function showPaid(data){
+  var pv=document.getElementById('paidView');
+  pv.classList.add('show');
+  var pt=data.payType||'Cash', bil=data.billTotal||0;
+  var icon='✅', title='ชำระเงินแล้ว', cards='';
+
+  if(pt==='Cash'){
+    var paid=Number(data.cash||0), change=Number(data.change||0);
+    if(change===0){ icon='👏'; title='รับเงินพอดี!'; }
+    else { icon='💵'; title='รับเงินสด'; }
+    cards+=card('💵 รับมา',fmt(paid)+' ฿','green');
+    cards+=change>0?card('💰 เงินทอน',fmt(change)+' ฿','yellow'):card('✅ พอดี','ไม่มีทอน','green');
+    cards+=card('🧾 ยอดรวม',fmt(bil)+' ฿','blue');
+  } else if(pt==='QR'){
+    icon='📱'; title='รับเงินโอน QR';
+    cards+=card('📱 โอนมา',fmt(bil)+' ฿','blue');
+    cards+=card('🧾 ยอดรวม',fmt(bil)+' ฿','green');
+  } else if(pt==='Mix'){
+    icon='🔀'; title='รับเงินผสม';
+    if(data.channels&&data.channels.length){
+      data.channels.filter(function(ch){return ch.amount>0;}).forEach(function(ch){
+        var cls='green', key=ch.key||'';
+        if(key.indexOf('transfer')>=0||key.indexOf('qr')>=0) cls='blue';
+        else if(key.indexOf('welfare')>=0) cls='purple';
+        cards+=card(ch.label,fmt(ch.amount)+' ฿',cls);
+      });
+    } else {
+      if(data.cash)     cards+=card('💵 เงินสด',fmt(data.cash)+' ฿','green');
+      if(data.transfer) cards+=card('📱 โอน',fmt(data.transfer)+' ฿','blue');
+      if(data.welfare)  cards+=card('💳 บัตรสวัสดิการ',fmt(data.welfare)+' ฿','purple');
+    }
+    cards+=card('🧾 ยอดรวม',fmt(bil)+' ฿','yellow');
+  }
+
+  setText('pIcon',icon); setText('pTitle',title);
+  document.getElementById('pCards').innerHTML=cards;
+
+  clearTimeout(pTimer);
+  pTimer=setTimeout(function(){
+    pv.classList.remove('show');
+    paidActive=false;
+    showIdle();
+  }, 2000);
+}
+
+function showIdle(){
+  document.getElementById('paidView').classList.remove('show');
+  show('idleView','flex'); hide('cartView');
+}
+
+function show(id,d){ var e=document.getElementById(id); if(e) e.style.display=d||'flex'; }
+function hide(id){ var e=document.getElementById(id); if(e) e.style.display='none'; }
+
+window.addEventListener('storage',function(e){
+  if(e.key==='pos_display'&&e.newValue) handleData(e.newValue);
+  if(e.key==='receipt_settings') applySettings();
+});
+
+applySettings();
+var d0=localStorage.getItem('pos_display');
+if(d0) handleData(d0); else showIdle();
+</script>
+</body>
+</html>
